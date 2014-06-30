@@ -3,6 +3,8 @@
  * GET home page.
  */
 
+var Movie = require('./../models/Movie');
+
 module.exports = function(app){
 
     function checkNotLogin(req,res,next){
@@ -21,6 +23,50 @@ module.exports = function(app){
         next();
     }
 
+    function movieAdd(req,res){
+        var movieName = req.params.name;
+        if(movieName){
+            return res.render('movie',{
+                title:req.params.name+'|电影|管理|movie.me',
+                label:'编辑电影:'+req.params.name,
+                movie:req.params.name
+            })
+        }else{
+            return res.render('movie',{
+                title:'新增加|电影|管理|movie.me',
+                label:'新增加电影',
+                movie:false
+            });
+        }
+    }
+
+    function movieGetJson(req,res){
+        Movie.findByName(req.params.name,function(err, obj){
+            res.send(obj);
+        });
+    }
+
+    function movieSave(req,res){
+        console.log(req.body.content);
+        var json = req.body.content;
+        if(json._id){//update
+            Movie.update(json,function(err){
+                if(err){
+                    res.send({'success':false,'err':err});
+                }else{
+                    res.send({'success':true});
+                }
+            });
+        }else{//insert
+            Movie.save(json,function(err){
+                if(err){
+                    res.send({'success':false,'err':err});
+                }else{
+                    res.send({'success':true});
+                }
+            });
+        }
+    }
 
     app.get('/',function(req,res){
         res.render('index',{title:'Nodejs-Demo'});
@@ -60,4 +106,8 @@ module.exports = function(app){
         res.render('home',{title:'Home-Nodejs-Demo'});
     });
 
+    app.get('/movie/add',[checkHadLogin,movieAdd]);
+    app.get('/movie/:name',[checkHadLogin,movieAdd]);
+    app.get('/movie/json/:name',[checkHadLogin,movieGetJson]);
+    app.post('/movie/add',movieSave)
 };
